@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.14)
+cmake_minimum_required(VERSION 3.30)
 project(udp VERSION 1.0.1 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
@@ -15,8 +15,8 @@ target_include_directories(udp PUBLIC
     $<INSTALL_INTERFACE:include>
 )
 
-find_package(Boost REQUIRED COMPONENTS system)
-target_link_libraries(udp PUBLIC Boost::system)
+find_package(Boost CONFIG)
+target_link_libraries(udp PUBLIC Boost)
 
 install(TARGETS udp EXPORT udpTargets
     LIBRARY DESTINATION lib
