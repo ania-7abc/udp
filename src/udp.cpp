@@ -1,47 +1,25 @@
 // udp.cpp
-
-#include <udp/udp.hpp>
-
 #include <exception>
+#include <udp/udp.hpp>
 #include <utility>
 
 UDP::UDP(uint16_t port)
-    : work_guard_(boost::asio::make_work_guard(io_)), thread_([this]() { io_.run(); }),
+    : work_guard_(boost::asio::make_work_guard(io_)), thread_([this](std::stop_token st) { io_.run(); }),
       socket_(io_, boost::asio::ip::udp::endpoint(boost::asio::ip::udp::v4(), port)), port_(port)
 {
 }
 
-UDP::~UDP()
-{
-    stop();
-}
-
 void UDP::set_callback(Callback callback)
 {
-    if (!running_)
-    {
-        throw std::runtime_error("UDP is not running");
-    }
-    this->callback_ = std::move(callback);
+    callback_ = std::move(callback);
     receive();
-}
-
-void UDP::stop()
-{
-    running_ = false;
-    work_guard_.reset();
-    io_.stop();
-    if (thread_.joinable())
-    {
-        thread_.join();
-    }
 }
 
 void UDP::send(const std::string &msg, const std::string &recipient_ip, uint16_t recipient_port)
 {
     auto endpoint = boost::asio::ip::udp::endpoint(boost::asio::ip::make_address(recipient_ip), recipient_port);
-
-    socket_.async_send_to(boost::asio::buffer(msg), endpoint, [this](auto error_code, size_t) {});
+    socket_.async_send_to(boost::asio::buffer(msg), endpoint,
+                          [](auto error_code, size_t) { /* игнорируем, можно логировать */ });
 }
 
 void UDP::join_multicast_group(const std::string &multicast_ip)
@@ -70,18 +48,13 @@ auto UDP::port() const -> uint16_t
 void UDP::receive()
 {
     if (!callback_)
-    {
         return;
-    }
 
     socket_.async_receive_from(boost::asio::buffer(buffer_), sender_, [this](auto error_code, size_t bytes) {
         if (!error_code && bytes > 0 && callback_)
-        {
             callback_(std::string(buffer_.data(), bytes), sender_.address().to_string(), sender_.port());
-        }
-        if (running_)
-        {
+
+        if (!stop_source_.stop_requested())
             receive();
-        }
     });
 }
