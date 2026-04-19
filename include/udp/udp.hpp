@@ -31,7 +31,6 @@ class UDP
   private:
     void receive();
 
-    std::jthread thread_;
     boost::asio::io_context io_;
     boost::asio::executor_work_guard<boost::asio::io_context::executor_type> work_guard_;
     boost::asio::ip::udp::socket socket_;
@@ -40,4 +39,5 @@ class UDP
     Callback callback_;
     std::stop_source stop_source_;
     uint16_t port_;
+    std::jthread thread_;
 };
