@@ -18,6 +18,12 @@ class UDP
 
     explicit UDP(uint16_t port);
 
+    ~UDP();
+    UDP(const UDP &) = default;
+    UDP(UDP &&) = default;
+    UDP &operator=(const UDP &) = default;
+    UDP &operator=(UDP &&) = default;
+
     void set_callback(Callback callback);
 
     void send(const std::string &msg, const std::string &recipient_ip, uint16_t recipient_port);

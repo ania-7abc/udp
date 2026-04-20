@@ -9,6 +9,14 @@ UDP::UDP(uint16_t port)
 {
 }
 
+UDP::~UDP()
+{
+    work_guard_.reset();
+    io_.stop();
+    if (thread_.joinable())
+        thread_.join();
+}
+
 void UDP::set_callback(Callback callback)
 {
     callback_ = std::move(callback);
